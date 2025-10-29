@@ -15,7 +15,6 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const newExpense = {
-      id: Date.now().toString(),
       date: req.body.date,
       description: req.body.description,
       payer: req.body.payer,
