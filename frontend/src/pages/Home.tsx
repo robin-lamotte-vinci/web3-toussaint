@@ -4,13 +4,13 @@ import ExpenseAdd from '../components/ExpenseAdd';
 import ExpenseSorter from '../components/ExpenseSorter';
 import type { Expense, ExpenseInput } from '../types/Expense';
 
+const host = import.meta.env.VITE_API_URL || 'http://unknown-api-url.com';
+
 export default function Home() {
   const [sortingAlgo, setSortingAlgo] = useState<(a: Expense, b: Expense) => number>(() => () => 0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const host = import.meta.env.VITE_API_URL || 'http://unknown-api-url.com';
 
   const sendApiRequestandHandleError = async (method: string = 'GET', path: string, body?: unknown) => {
     try {
@@ -47,8 +47,8 @@ export default function Home() {
   }, []);
 
   const handleAddExpense = async (newExpense: ExpenseInput) => {
-    const tempNewExpense = {...newExpense, id: "optimisticNewExpense"}; // Optimistically update the state, whatever the sort method, add on top
-    const newExpensesOptimistic = [tempNewExpense, ...expenses]; 
+    const newExpenseOptimistic = {...newExpense, id: "zoptimistic"}; // Optimistically update the state, whatever the sort method, add on top
+    const newExpensesOptimistic = [newExpenseOptimistic, ...expenses]; 
     setExpenses(newExpensesOptimistic);
 
     await sendApiRequestandHandleError('POST', 'expenses', newExpense);

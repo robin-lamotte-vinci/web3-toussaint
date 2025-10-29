@@ -1,82 +1,62 @@
-import { useState } from "react";
 import type { ExpenseInput } from "../types/Expense";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 interface ExpenseAddProps {
   addExpense: (expense: ExpenseInput) => void;
 }
 
+const expenseSchema = z.object({
+  description: z
+    .string()
+    .max(200, "Description cannot exceed 200 characters")
+    .min(3, "Description must be at least 3 characters long")
+    .or(z.literal("")),
+  payer: z.enum(["Alice", "Bob"], {
+    error: "Payer must be either Alice or Bob",
+  }),
+  amount: z.coerce
+    .number<number>()
+    .gt(0, { message: "Amount must be a positive number" }),
+});
+
+type FormData = z.infer<typeof expenseSchema>;
+
 export default function ExpenseAdd({ addExpense }: ExpenseAddProps) {
-  const [payer, setPayer] = useState<"Alice" | "Bob">("Alice");
-  const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
-  const [description, setDescription] = useState<string>("");
-  const [amount, setAmount] = useState<string>("");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(expenseSchema),
+  });
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const parsedAmount = parseFloat(amount);
-    const dateISO = new Date(date).toISOString();
-
-    addExpense({
-      date: dateISO,
-      description: description,
-      payer: payer,
-      amount: isNaN(parsedAmount) ? 0 : parsedAmount,
-    });
+  const onSubmit = ({ description, payer, amount }: FormData) => {
+    addExpense({ description, payer, amount, date: new Date().toISOString() });
+    reset();
   };
+
+  const isSubmitDisabled = isSubmitting;
+
   return (
-    <form onSubmit={onSubmit}>
-      <div>
-        <label>
-          Payer:
-          <select
-            value={payer}
-            onChange={(e) => setPayer(e.target.value as "Alice" | "Bob")}
-          >
-            <option value="Alice">Alice</option>
-            <option value="Bob">Bob</option>
-          </select>
-        </label>
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+      <input type="text" placeholder="Description" {...register('description')} />
+      {errors.description && <span> {errors.description.message}</span>}
 
-      <div>
-        <label>
-          Date:
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-        </label>
-      </div>
+      <select {...register('payer')}>
+        <option value="Alice">Alice</option>
+        <option value="Bob">Bob</option>
+      </select>
+      {errors.payer && <span>{errors.payer.message}</span>}
 
-      <div>
-        <label>
-          Description:
-          <input
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </label>
-      </div>
+      <input type="number" {...register('amount')} placeholder="Enter amount" step={0.01} />
+      {errors.amount && <span>{errors.amount.message}</span>}
 
-      <div>
-        <label>
-          Amount:
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </label>
-      </div>
-
-      <div>
-        <button type="submit">Add</button>
-      </div>
+      <button type="submit" disabled={isSubmitDisabled}>
+        {isSubmitting ? 'Adding...' : 'Add'}
+      </button>
     </form>
   );
 }
