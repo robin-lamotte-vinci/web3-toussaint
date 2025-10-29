@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import ExpenseItem from '../components/ExpenseItem';
 import ExpenseAdd from '../components/ExpenseAdd';
 import ExpenseSorter from '../components/ExpenseSorter';
-import type { Expense } from '../types/Expense';
+import type { Expense, ExpenseInput } from '../types/Expense';
 
 export default function Home() {
   const [sortingAlgo, setSortingAlgo] = useState<(a: Expense, b: Expense) => number>(() => () => 0);
@@ -46,12 +46,14 @@ export default function Home() {
     fetchExpenses();
   }, []);
 
-  const handleAddExpense = async (newExpense: Expense) => {
-    const newExpensesOptimistic = [newExpense, ...expenses]; // Optimistically update the state, whatever the sort method, add on top
+  const handleAddExpense = async (newExpense: ExpenseInput) => {
+    const tempNewExpense = {...newExpense, id: "optimisticNewExpense"}; // Optimistically update the state, whatever the sort method, add on top
+    const newExpensesOptimistic = [tempNewExpense, ...expenses]; 
     setExpenses(newExpensesOptimistic);
-    const addedExpense = await sendApiRequestandHandleError('POST', 'expenses', newExpense);
-    const newExpensesActual = [addedExpense, ...expenses]; // Now that we have the actual added expense with id from backend, let's use it instead of the optimistically added one
-    setExpenses(newExpensesActual);
+
+    await sendApiRequestandHandleError('POST', 'expenses', newExpense);
+    const updatedExpenses = await sendApiRequestandHandleError('GET', 'expenses');
+    setExpenses(updatedExpenses);
   };
 
   const handleResetData = async () => {
