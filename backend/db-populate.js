@@ -1,5 +1,4 @@
-import "dotenv/config";
-import { PrismaClient } from './generated/prisma/client.ts';
+const { PrismaClient } = require('./generated/prisma');
 
 const prisma = new PrismaClient();
 
