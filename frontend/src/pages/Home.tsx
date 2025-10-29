@@ -14,7 +14,7 @@ export default function Home() {
 
   const sendApiRequestandHandleError = async (method: string = 'GET', path: string, body?: unknown) => {
     try {
-      const response = await fetch(`${host}/${path}`, {
+      const response = await fetch(`${host}/api/${path}`, {
         method: method,
         headers: body ? { 'Content-Type': 'application/json' } : {},
         body: body ? JSON.stringify(body) : null,
